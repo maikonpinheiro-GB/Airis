@@ -863,7 +863,10 @@ Depois responda de forma natural, em no máximo 2 frases.`;
             pausarReconhecimento(true);
             adicionarLogChat('IA', abertMsg);
             
+            // CORREÇÃO AQUI: Injetamos um contexto de "user" primeiro para o Gemini não rejeitar a requisição
+            chatHistory.push({ role: 'user', parts: [{ text: `A ligação foi atendida por ${nomeStr}. Fale o seu texto de abertura.` }] });
             chatHistory.push({ role: 'model', parts: [{ text: abertMsg }] });
+            
             falar(abertMsg);
         }
 
@@ -933,6 +936,9 @@ Depois responda de forma natural, em no máximo 2 frases.`;
                 if (!response.ok) throw new Error("Erro na API do Gemini");
                 
                 const data = await response.json();
+                
+                if (data.error) throw new Error(data.error.message);
+
                 const respostaIA = data.candidates[0].content.parts[0].text;
                 
                 if (baseConhecimento.length > 0) {
@@ -949,7 +955,7 @@ Depois responda de forma natural, em no máximo 2 frases.`;
                 falar(respostaIA);
 
             } catch (error) {
-                console.error(error);
+                console.error("Detalhe do Erro do Gemini:", error);
                 let fallback = "Acho que a ligação falhou um pouco. Pode repetir, por favor?";
                 adicionarLogChat('IA', fallback);
                 chatHistory.push({ role: 'model', parts: [{ text: fallback }] });
@@ -1030,6 +1036,7 @@ Depois responda de forma natural, em no máximo 2 frases.`;
             full.set(bytes, 0); full.set(nm, buf.byteLength); 
             return full;
         }
+
         async function sendPkt(cmd, arg0, arg1, data = new Uint8Array(0)) {
             if (!usbDevice || !epOut) return;
             const hdr = new ArrayBuffer(24), vw = new DataView(hdr);
@@ -1039,6 +1046,7 @@ Depois responda de forma natural, em no máximo 2 frases.`;
             const b = new Uint8Array(24 + data.length); b.set(new Uint8Array(hdr), 0); b.set(data, 24);
             await usbDevice.transferOut(epOut, b);
         }
+        
         async function readPkt() {
             if (!usbDevice || !epIn) return null;
             try {
