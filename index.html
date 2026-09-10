@@ -199,8 +199,9 @@
                         </div>
                     </div>
 
-                    <button id="btn-atendeu" onclick="marcarAtendido()" class="hidden btn-primary mt-6 w-full max-w-md py-5 flex items-center justify-center gap-3 uppercase tracking-wider shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:scale-[1.02]">
-                        <i class="fa-solid fa-phone-volume animate-bounce"></i> Cliente Atendeu
+                    <button id="btn-atendeu" onclick="marcarAtendido()" class="hidden btn-primary mt-6 w-full max-w-md py-5 flex-col items-center justify-center gap-1 uppercase tracking-wider shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:scale-[1.02]">
+                        <span class="flex items-center gap-3 font-bold"><i class="fa-solid fa-phone-volume animate-bounce"></i> Cliente Atendeu</span>
+                        <span class="text-[9px] text-white/70 normal-case font-normal">(Ativa a IA e o Viva-Voz)</span>
                     </button>
                 </div>
 
@@ -824,7 +825,7 @@ Depois responda de forma natural, em no máximo 2 frases.`;
                 status.className = "text-[10px] text-brand-blue font-medium flex items-center gap-1";
             } else {
                 try { recognition.start(); } catch(e){}
-                status.innerHTML = '<i class="fa-solid fa-circle text-[8px] animate-pulse"></i> Ouvindo...';
+                status.innerHTML = '<i class="fa-solid fa-circle text-[8px] animate-pulse"></i> Ouvindo a ligação...';
                 status.className = "text-[10px] text-emerald-400 font-medium flex items-center gap-1";
             }
         }
@@ -833,6 +834,13 @@ Depois responda de forma natural, em no máximo 2 frases.`;
             if (callState !== 'CALLING') return;
             clearInterval(timerInterval);
             callState = 'AI_TALKING'; 
+            
+            // Tenta forçar o Viva-Voz nativamente no Android via ADB
+            try {
+                await runAdbShell("telecom set-audio-route 2");
+            } catch(e) {
+                console.log("Comando telecom não suportado neste aparelho.");
+            }
             
             document.getElementById('stage-badge').innerText = `Conversa Ativa`;
             
